@@ -66,6 +66,9 @@ BEGIN_MESSAGE_MAP(CgetFilePropertyMFCDlg, CDialogEx)
 	ON_BN_CLICKED(IDC_BUTTON1, &CgetFilePropertyMFCDlg::OnBnClickedButton1)
 	ON_WM_DROPFILES()
 	ON_WM_DROPFILES()
+	ON_BN_CLICKED(IDC_RADIO_Y_M_D, &CgetFilePropertyMFCDlg::OnBnClickedRadioYMD)
+	ON_BN_CLICKED(IDC_RADIO_MDY, &CgetFilePropertyMFCDlg::OnBnClickedRadioMdy)
+	ON_BN_CLICKED(IDC_RADIO_DMY, &CgetFilePropertyMFCDlg::OnBnClickedRadioDmy)
 END_MESSAGE_MAP()
 
 
@@ -109,6 +112,9 @@ BOOL CgetFilePropertyMFCDlg::OnInitDialog()
 	CString initTips=string01+stringReturn+string02+stringReturn+string03;
 	SetDlgItemText(IDC_EDIT1, initTips);	
 	*/
+	
+	CheckRadioButton(IDD_GETFILEPROPERTYMFC_DIALOG,IDC_RADIO_Y_M_D,IDC_RADIO_Y_M_D);
+	globalDateType=YEAR_MONTH_DAY;
 
 	return TRUE;  // return TRUE  unless you set the focus to a control
 }
@@ -265,7 +271,27 @@ CString CgetFilePropertyMFCDlg::GetFileNameAndProperties(CString strFilePath, in
 
 	ZeroMemory(&systemTimeLocal, sizeof(SYSTEMTIME));
 	FileTimeToSystemTime(&fileModifyDate, &systemTimeLocal);
-	strModifyTime.Format(strDateFormat, systemTimeLocal.wYear, systemTimeLocal.wMonth, systemTimeLocal.wDay,  systemTimeLocal.wHour+8, systemTimeLocal.wMinute, systemTimeLocal.wSecond); 
+	
+	switch(dateType)
+	{
+		case YEAR_MONTH_DAY:
+			strDateFormat=_T("%04d-%02d-%02d %02d:%02d:%02d");
+			strModifyTime.Format(strDateFormat, systemTimeLocal.wYear, systemTimeLocal.wMonth, systemTimeLocal.wDay,  systemTimeLocal.wHour+8, systemTimeLocal.wMinute, systemTimeLocal.wSecond); 
+			break;
+
+		case MONTH_DAY_YEAR:
+			strDateFormat=_T("%02d-%02d-%04d %02d:%02d:%02d");
+			strModifyTime.Format(strDateFormat,  systemTimeLocal.wMonth, systemTimeLocal.wDay, systemTimeLocal.wYear, systemTimeLocal.wHour+8, systemTimeLocal.wMinute, systemTimeLocal.wSecond); 
+			break;
+
+		case DAY_MONTH_YEAR:
+			strDateFormat=_T("%02d-%02d-%04d %02d:%02d:%02d");
+			strModifyTime.Format(strDateFormat, systemTimeLocal.wDay, systemTimeLocal.wMonth, systemTimeLocal.wYear, systemTimeLocal.wHour+8, systemTimeLocal.wMinute, systemTimeLocal.wSecond); 
+			break;
+
+		default:
+			break;
+	}	
 
 	finalResult=firstFileName+_T(" ")+strModifyTime;
 	return finalResult;
@@ -304,11 +330,11 @@ void CgetFilePropertyMFCDlg::OnBnClickedButton1()
 				 
 				if(strFileNameAndProperties.IsEmpty())
 				{
-					strFileNameAndProperties+=(GetFileNameAndProperties(strFilePath, 0));
+					strFileNameAndProperties+=(GetFileNameAndProperties(strFilePath, globalDateType));
 				}
 				else
 				{
-					strFileNameAndProperties+=(_T("\r\n")+GetFileNameAndProperties(strFilePath, 0));
+					strFileNameAndProperties+=(_T("\r\n")+GetFileNameAndProperties(strFilePath, globalDateType));
 				}
 			}//end while       
 			 			
@@ -344,11 +370,11 @@ void CgetFilePropertyMFCDlg::OnDropFiles(HDROP hDropInfo)
 			//SetOneFileNameAndProToClip(filepath);	 
 			if(strFileNameAndProperties.IsEmpty())
 			{
-				strFileNameAndProperties+=(GetFileNameAndProperties(filepath, 0));
+				strFileNameAndProperties+=(GetFileNameAndProperties(filepath, globalDateType));
 			}
 			else
 			{
-				strFileNameAndProperties+=(_T("\r\n")+GetFileNameAndProperties(filepath, 0));
+				strFileNameAndProperties+=(_T("\r\n")+GetFileNameAndProperties(filepath, globalDateType));
 			}
         }
     }
@@ -358,4 +384,27 @@ void CgetFilePropertyMFCDlg::OnDropFiles(HDROP hDropInfo)
     DragFinish(hDropInfo);
 	
 	CDialogEx::OnDropFiles(hDropInfo);
+}
+
+
+
+
+void CgetFilePropertyMFCDlg::OnBnClickedRadioYMD()
+{
+	// TODO: Add your control notification handler code here
+	globalDateType=YEAR_MONTH_DAY;
+}
+
+
+void CgetFilePropertyMFCDlg::OnBnClickedRadioMdy()
+{
+	// TODO: Add your control notification handler code here
+	globalDateType=MONTH_DAY_YEAR;
+}
+
+
+void CgetFilePropertyMFCDlg::OnBnClickedRadioDmy()
+{
+	// TODO: Add your control notification handler code here
+    globalDateType=DAY_MONTH_YEAR;
 }
