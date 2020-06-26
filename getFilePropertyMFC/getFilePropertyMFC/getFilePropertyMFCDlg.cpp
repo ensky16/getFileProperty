@@ -197,7 +197,7 @@ void  CgetFilePropertyMFCDlg::SetClipBoardData(CString cStringText)
 }
 
 
-void CgetFilePropertyMFCDlg::SetFileNameAndProToClip(CString strFilePath)
+void CgetFilePropertyMFCDlg::SetOneFileNameAndProToClip(CString strFilePath)
 {
 	FILETIME fileCreateDate, fileModifyDate, fileAccessDate;
 	CString strCreateTime, strModifyTime, strAccessTime;
@@ -229,7 +229,7 @@ void CgetFilePropertyMFCDlg::SetFileNameAndProToClip(CString strFilePath)
 	FileTimeToSystemTime(&fileAccessDate, &systemTimeLocal);
 	strAccessTime.Format(_T("%04d-%02d-%02d %02d:%02d:%02d"), systemTimeLocal.wYear, systemTimeLocal.wMonth, systemTimeLocal.wDay,  systemTimeLocal.wHour+8, systemTimeLocal.wMinute, systemTimeLocal.wSecond); 
 
-	finalResult=firstFileName+_T(" ")+strCreateTime;
+	finalResult=firstFileName+_T(" ")+strModifyTime;
 	SetDlgItemText(IDC_EDIT1, finalResult);	
 	//SetDlgItemText(IDC_EDIT2,  firstFileName+_T(" ")+strModifyTime);	
 	//SetDlgItemText(IDC_EDIT3,  firstFileName+_T(" ")+strAccessTime);	
@@ -238,6 +238,38 @@ void CgetFilePropertyMFCDlg::SetFileNameAndProToClip(CString strFilePath)
 	SetClipBoardData(finalResult);
 }
 
+
+CString CgetFilePropertyMFCDlg::GetFileNameAndProperties(CString strFilePath, int dateType)
+{
+	FILETIME fileCreateDate, fileModifyDate, fileAccessDate;
+	CString strModifyTime;
+	SYSTEMTIME systemTimeLocal;
+	CString firstFileName;
+	CString finalResult;
+
+	CString strDateFormat=_T("%04d-%02d-%02d %02d:%02d:%02d");
+
+	firstFileName = strFilePath.Right(strFilePath.GetLength()-strFilePath.ReverseFind('\\')-1); 
+	
+	/***************get file date start************************************/
+	HANDLE hFile = CreateFile(strFilePath, GENERIC_READ,          // open for reading
+	FILE_SHARE_READ,       // share for reading
+	NULL,                            // default security
+	OPEN_EXISTING,          // existing file only
+	FILE_FLAG_BACKUP_SEMANTICS , // normal file
+	NULL);
+	if (!GetFileTime(hFile, &fileCreateDate, &fileAccessDate, &fileModifyDate))
+	{
+		return _T("");
+	}
+
+	ZeroMemory(&systemTimeLocal, sizeof(SYSTEMTIME));
+	FileTimeToSystemTime(&fileModifyDate, &systemTimeLocal);
+	strModifyTime.Format(strDateFormat, systemTimeLocal.wYear, systemTimeLocal.wMonth, systemTimeLocal.wDay,  systemTimeLocal.wHour+8, systemTimeLocal.wMinute, systemTimeLocal.wSecond); 
+
+	finalResult=firstFileName+_T(" ")+strModifyTime;
+	return finalResult;
+}
 
 void CgetFilePropertyMFCDlg::OnBnClickedButton1()
 {
@@ -256,6 +288,8 @@ void CgetFilePropertyMFCDlg::OnBnClickedButton1()
 		CArray<CString, CString> array_filename;
 
 		CString strFilePath; 
+		CString strFileNameAndProperties;
+
 		if (IDOK == fileDlg.DoModal())
 		{
 			POSITION pos_file;
@@ -265,11 +299,21 @@ void CgetFilePropertyMFCDlg::OnBnClickedButton1()
 			{
 				strFilePath = fileDlg.GetNextPathName(pos_file);
 				array_filename.Add(strFilePath);
-				SetDlgItemText(IDC_EDIT1,  strFilePath);				
-				
+				//SetDlgItemText(IDC_EDIT1,  strFilePath);				
+				//SetOneFileNameAndProToClip(strFilePath);	
+				 
+				if(strFileNameAndProperties.IsEmpty())
+				{
+					strFileNameAndProperties+=(GetFileNameAndProperties(strFilePath, 0));
+				}
+				else
+				{
+					strFileNameAndProperties+=(_T("\r\n")+GetFileNameAndProperties(strFilePath, 0));
+				}
 			}//end while       
 			 			
-			SetFileNameAndProToClip(strFilePath);	 
+			SetDlgItemText(IDC_EDIT1, strFileNameAndProperties);	
+			SetClipBoardData(strFileNameAndProperties);
 		}
 	}
 	catch(...)
@@ -286,7 +330,7 @@ void CgetFilePropertyMFCDlg::OnDropFiles(HDROP hDropInfo)
 	
 	UINT nCount;
     TCHAR szPath[MAX_PATH];
- 
+ 	CString strFileNameAndProperties;
     nCount = DragQueryFile(hDropInfo, 0xFFFFFFFF, NULL, 0);
     if (nCount)
     {
@@ -297,11 +341,20 @@ void CgetFilePropertyMFCDlg::OnDropFiles(HDROP hDropInfo)
 			CString filepath(szPath, pathlenght);//change the file path to CString format
 			//SetDlgItemText(IDC_EDIT1,  filepath);	
             //MessageBox(szPath, _T("WM_DROPFILES"));
-
-			SetFileNameAndProToClip(filepath);	 
+			//SetOneFileNameAndProToClip(filepath);	 
+			if(strFileNameAndProperties.IsEmpty())
+			{
+				strFileNameAndProperties+=(GetFileNameAndProperties(filepath, 0));
+			}
+			else
+			{
+				strFileNameAndProperties+=(_T("\r\n")+GetFileNameAndProperties(filepath, 0));
+			}
         }
     }
  
+	SetDlgItemText(IDC_EDIT1, strFileNameAndProperties);	
+	SetClipBoardData(strFileNameAndProperties);
     DragFinish(hDropInfo);
 	
 	CDialogEx::OnDropFiles(hDropInfo);

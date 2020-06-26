@@ -33,5 +33,6 @@ public:
 	afx_msg void OnBnClickedButton1();
 	void SetClipBoardData(CString strText);
 	afx_msg void OnDropFiles(HDROP hDropInfo);
-	void SetFileNameAndProToClip(CString filePath);
+	void SetOneFileNameAndProToClip(CString filePath);
+	CString GetFileNameAndProperties(CString filePath, int dateType);
 };
