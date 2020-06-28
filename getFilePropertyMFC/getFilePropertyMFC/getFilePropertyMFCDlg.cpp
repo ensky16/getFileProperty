@@ -113,8 +113,13 @@ BOOL CgetFilePropertyMFCDlg::OnInitDialog()
 	SetDlgItemText(IDC_EDIT1, initTips);	
 	*/
 	
-	CheckRadioButton(IDD_GETFILEPROPERTYMFC_DIALOG,IDC_RADIO_Y_M_D,IDC_RADIO_Y_M_D);
-	globalDateType=YEAR_MONTH_DAY;
+	CheckRadioButton(IDD_GETFILEPROPERTYMFC_DIALOG,IDC_RADIO_DMY,IDC_RADIO_DMY);
+	globalDateType=DAY_MONTH_YEAR;
+
+	if(!globalStrFileNameAndProperties.IsEmpty())
+	{
+		SetDlgItemText(IDC_EDIT1, globalStrFileNameAndProperties);	
+	}
 
 	return TRUE;  // return TRUE  unless you set the focus to a control
 }
@@ -275,21 +280,23 @@ CString CgetFilePropertyMFCDlg::GetFileNameAndProperties(CString strFilePath, in
 	switch(dateType)
 	{
 		case YEAR_MONTH_DAY:
-			strDateFormat=_T("%04d-%02d-%02d %02d:%02d:%02d");
+			strDateFormat=_T("%04d/%02d/%02d %02d/%02d/%02d");
 			strModifyTime.Format(strDateFormat, systemTimeLocal.wYear, systemTimeLocal.wMonth, systemTimeLocal.wDay,  systemTimeLocal.wHour+8, systemTimeLocal.wMinute, systemTimeLocal.wSecond); 
 			break;
 
 		case MONTH_DAY_YEAR:
-			strDateFormat=_T("%02d-%02d-%04d %02d:%02d:%02d");
+			strDateFormat=_T("%02d/%02d/%04d %02d/%02d/%02d");
 			strModifyTime.Format(strDateFormat,  systemTimeLocal.wMonth, systemTimeLocal.wDay, systemTimeLocal.wYear, systemTimeLocal.wHour+8, systemTimeLocal.wMinute, systemTimeLocal.wSecond); 
 			break;
 
 		case DAY_MONTH_YEAR:
-			strDateFormat=_T("%02d-%02d-%04d %02d:%02d:%02d");
+			strDateFormat=_T("%02d/%02d/%04d %02d/%02d/%02d");
 			strModifyTime.Format(strDateFormat, systemTimeLocal.wDay, systemTimeLocal.wMonth, systemTimeLocal.wYear, systemTimeLocal.wHour+8, systemTimeLocal.wMinute, systemTimeLocal.wSecond); 
 			break;
 
 		default:
+			strDateFormat=_T("%02d/%02d/%04d %02d/%02d/%02d");
+			strModifyTime.Format(strDateFormat, systemTimeLocal.wDay, systemTimeLocal.wMonth, systemTimeLocal.wYear, systemTimeLocal.wHour+8, systemTimeLocal.wMinute, systemTimeLocal.wSecond); 
 			break;
 	}	
 
@@ -408,3 +415,80 @@ void CgetFilePropertyMFCDlg::OnBnClickedRadioDmy()
 	// TODO: Add your control notification handler code here
     globalDateType=DAY_MONTH_YEAR;
 }
+
+void CgetFilePropertyMFCDlg::processGetCommand(CString cString)
+{
+	// TODO: Add your control notification handler code here
+	if(cString.IsEmpty())
+		return ;
+
+	CString strFileNameAndProperties;
+	CString filepath;
+	//+5 is for length of <.exe">
+	int firstDirPos=cString.Find(_T(".exe\""))+5;
+	int totalLen=cString.GetLength();
+	int firstSpaceOfs=0, spaceOfsNext, lastSpaceOfs=0;
+		
+	/*
+	* the directory path is separte by space
+	*/
+
+	//find the last space
+	lastSpaceOfs=cString.ReverseFind(' ');
+
+	//find the first space
+	firstSpaceOfs=cString.Find(' ', firstDirPos);
+	
+	/***********debug start**************
+	CString debugStr;
+	CString strFirstDirPos;
+	CString strTotalLen;
+	CString strSpaceOfs;
+	CString strLastSpaceOfs;
+    CString strSpaceOfsNext;
+	spaceOfsNext=cString.Find(' ', firstSpaceOfs+1);
+
+	strFirstDirPos.Format(_T("%d"),firstDirPos);
+	strTotalLen.Format(_T("%d"),totalLen);
+	strSpaceOfs.Format(_T("%d"),firstSpaceOfs);
+	strLastSpaceOfs.Format(_T("%d"),lastSpaceOfs);
+	strSpaceOfsNext.Format(_T("%d"),spaceOfsNext);
+	strFileNameAndProperties=cString.Mid(firstSpaceOfs, totalLen-firstSpaceOfs);
+
+	debugStr=strFirstDirPos+_T("::total len: ")+strTotalLen+(" ::fist space: ")+strSpaceOfs+(" ::space ofs next : ")+strSpaceOfsNext+(" ::last:: ")+strLastSpaceOfs+(" ::: ")+strFileNameAndProperties+(" ##")+cString;
+	SetClipBoardData(debugStr);
+	***********debug end*****************/
+	
+	while(firstSpaceOfs<lastSpaceOfs)
+	{
+		spaceOfsNext=cString.Find(' ', firstSpaceOfs+1);
+		filepath=cString.Mid(firstSpaceOfs+1, spaceOfsNext-firstSpaceOfs);
+		firstSpaceOfs+=filepath.GetLength();
+
+		if(strFileNameAndProperties.IsEmpty())
+		{
+			strFileNameAndProperties+=(GetFileNameAndProperties(filepath, globalDateType));
+		}
+		else
+		{
+			strFileNameAndProperties+=(_T("\r\n")+GetFileNameAndProperties(filepath, globalDateType));
+		}
+	}
+ 
+	//the last one
+	filepath=cString.Mid(lastSpaceOfs+1, totalLen-lastSpaceOfs-1);
+	
+	if(strFileNameAndProperties.IsEmpty())
+	{
+		strFileNameAndProperties+=(GetFileNameAndProperties(filepath, globalDateType));
+	}
+	else
+	{
+		strFileNameAndProperties+=(_T("\r\n")+GetFileNameAndProperties(filepath, globalDateType));
+	}
+ 
+	//here can not call SetDlgItemText(IDC_EDIT1, strFileNameAndProperties), becase it is not working
+	SetClipBoardData(strFileNameAndProperties);
+	globalStrFileNameAndProperties=strFileNameAndProperties;
+}
+

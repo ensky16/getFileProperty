@@ -46,6 +46,10 @@ BOOL CgetFilePropertyMFCApp::InitInstance()
 	InitCtrls.dwSize = sizeof(InitCtrls);
 	// Set this to include all the common control classes you want to use
 	// in your application.
+
+	//get command
+	CString cStrCommand=GetCommandLine();
+
 	InitCtrls.dwICC = ICC_WIN95_CLASSES;
 	InitCommonControlsEx(&InitCtrls);
 
@@ -68,6 +72,8 @@ BOOL CgetFilePropertyMFCApp::InitInstance()
 	SetRegistryKey(_T("Local AppWizard-Generated Applications"));
 
 	CgetFilePropertyMFCDlg dlg;
+	//process the command
+	dlg.processGetCommand(cStrCommand);
 	m_pMainWnd = &dlg;
 	INT_PTR nResponse = dlg.DoModal();
 	if (nResponse == IDOK)

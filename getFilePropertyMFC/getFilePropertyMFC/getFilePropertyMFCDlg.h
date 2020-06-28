@@ -35,11 +35,13 @@ public:
 	afx_msg void OnDropFiles(HDROP hDropInfo);
 	void SetOneFileNameAndProToClip(CString filePath);
 	CString GetFileNameAndProperties(CString filePath, int dateType);
+	void processGetCommand(CString cString);
 	
 	#define YEAR_MONTH_DAY 1
 	#define MONTH_DAY_YEAR 2
 	#define DAY_MONTH_YEAR 3
 	int globalDateType;
+	CString globalStrFileNameAndProperties;
 	afx_msg void OnBnClickedRadioYMD();
 	afx_msg void OnBnClickedRadioMdy();
 	afx_msg void OnBnClickedRadioDmy();
