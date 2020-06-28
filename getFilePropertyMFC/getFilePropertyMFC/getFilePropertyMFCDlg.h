@@ -35,7 +35,8 @@ public:
 	afx_msg void OnDropFiles(HDROP hDropInfo);
 	void SetOneFileNameAndProToClip(CString filePath);
 	CString GetFileNameAndProperties(CString filePath, int dateType);
-	void processGetCommand(CString cString);
+	void ProcessGetCommand(CString cString);
+	bool IsFileExist(CString filePath);
 	
 	#define YEAR_MONTH_DAY 1
 	#define MONTH_DAY_YEAR 2

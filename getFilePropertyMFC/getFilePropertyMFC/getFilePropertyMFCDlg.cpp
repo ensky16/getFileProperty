@@ -416,7 +416,18 @@ void CgetFilePropertyMFCDlg::OnBnClickedRadioDmy()
     globalDateType=DAY_MONTH_YEAR;
 }
 
-void CgetFilePropertyMFCDlg::processGetCommand(CString cString)
+bool CgetFilePropertyMFCDlg::IsFileExist(CString filePath)
+{
+	WIN32_FIND_DATA fd = {0};
+	HANDLE hFind = FindFirstFile(filePath, &fd);
+	if (hFind != INVALID_HANDLE_VALUE)
+	{
+		FindClose(hFind);
+	}
+	return ((hFind != INVALID_HANDLE_VALUE) && !(fd.dwFileAttributes & FILE_ATTRIBUTE_DIRECTORY));
+}
+
+void CgetFilePropertyMFCDlg::ProcessGetCommand(CString cString)
 {
 	// TODO: Add your control notification handler code here
 	if(cString.IsEmpty())
@@ -438,32 +449,20 @@ void CgetFilePropertyMFCDlg::processGetCommand(CString cString)
 
 	//find the first space
 	firstSpaceOfs=cString.Find(' ', firstDirPos);
-	
-	/***********debug start**************
-	CString debugStr;
-	CString strFirstDirPos;
-	CString strTotalLen;
-	CString strSpaceOfs;
-	CString strLastSpaceOfs;
-    CString strSpaceOfsNext;
-	spaceOfsNext=cString.Find(' ', firstSpaceOfs+1);
-
-	strFirstDirPos.Format(_T("%d"),firstDirPos);
-	strTotalLen.Format(_T("%d"),totalLen);
-	strSpaceOfs.Format(_T("%d"),firstSpaceOfs);
-	strLastSpaceOfs.Format(_T("%d"),lastSpaceOfs);
-	strSpaceOfsNext.Format(_T("%d"),spaceOfsNext);
-	strFileNameAndProperties=cString.Mid(firstSpaceOfs, totalLen-firstSpaceOfs);
-
-	debugStr=strFirstDirPos+_T("::total len: ")+strTotalLen+(" ::fist space: ")+strSpaceOfs+(" ::space ofs next : ")+strSpaceOfsNext+(" ::last:: ")+strLastSpaceOfs+(" ::: ")+strFileNameAndProperties+(" ##")+cString;
-	SetClipBoardData(debugStr);
-	***********debug end*****************/
-	
+	 	
 	while(firstSpaceOfs<lastSpaceOfs)
 	{
 		spaceOfsNext=cString.Find(' ', firstSpaceOfs+1);
 		filepath=cString.Mid(firstSpaceOfs+1, spaceOfsNext-firstSpaceOfs);
 		firstSpaceOfs+=filepath.GetLength();
+
+		if(IsFileExist(filepath)==false)
+		{
+			strFileNameAndProperties=_T("directory is invalid, do not support space in path");
+			SetClipBoardData(strFileNameAndProperties);
+			globalStrFileNameAndProperties=strFileNameAndProperties;
+			return ;
+		}
 
 		if(strFileNameAndProperties.IsEmpty())
 		{

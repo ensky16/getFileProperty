@@ -73,7 +73,7 @@ BOOL CgetFilePropertyMFCApp::InitInstance()
 
 	CgetFilePropertyMFCDlg dlg;
 	//process the command
-	dlg.processGetCommand(cStrCommand);
+	dlg.ProcessGetCommand(cStrCommand);
 	m_pMainWnd = &dlg;
 	INT_PTR nResponse = dlg.DoModal();
 	if (nResponse == IDOK)
